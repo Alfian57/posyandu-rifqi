@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+/* Tailwind v4 Theme Configuration */
+@theme {
+    /* Font families */
+    --font-poppins: "Poppins", sans-serif;
+    --font-urbanist: "Urbanist", sans-serif;
+
+    /* Default sans-serif uses Poppins for body text */
+    --font-sans: "Poppins", system-ui, sans-serif;
+}
+
+/* Base styles */
+@layer base {
+    html {
+        font-family: var(--font-poppins);
+    }
+
+    /* Urbanist for headings - more modern & bold */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: var(--font-urbanist);
+    }
+}
+
+/* Utility classes for font switching */
+@layer utilities {
+    .font-poppins {
+        font-family: var(--font-poppins);
+    }
+
+    .font-urbanist {
+        font-family: var(--font-urbanist);
+    }
+}
