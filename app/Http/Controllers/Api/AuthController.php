@@ -7,6 +7,7 @@ use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,27 +25,61 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request): JsonResponse
     {
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'kader',
-            'nik' => $request->nik,
-            'nik_hash' => User::hashNik($request->nik),
-            'phone_number' => $request->phone_number,
-        ]);
+        try {
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'role' => 'kader',
+                'nik' => $request->nik,
+                'nik_hash' => User::hashNik($request->nik),
+                'phone_number' => $request->phone_number,
+            ]);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+            $token = $user->createToken('auth_token')->plainTextToken;
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User registered successfully',
-            'data' => [
-                'user' => $user,
-                'token' => $token,
-                'token_type' => 'Bearer',
-            ],
-        ], 201);
+            return response()->json([
+                'success' => true,
+                'message' => 'User registered successfully',
+                'data' => [
+                    'user' => $user,
+                    'token' => $token,
+                    'token_type' => 'Bearer',
+                ],
+            ], 201);
+        } catch (QueryException $e) {
+            // Handle database constraint violations
+            if ($e->getCode() === '23000') {
+                // Check if it's a duplicate entry error
+                if (strpos($e->getMessage(), 'nik_hash_unique') !== false) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Validation failed',
+                        'errors' => [
+                            'nik' => ['NIK sudah terdaftar.']
+                        ]
+                    ], 422);
+                }
+
+                if (strpos($e->getMessage(), 'users_email_unique') !== false) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Validation failed',
+                        'errors' => [
+                            'email' => ['Email sudah terdaftar.']
+                        ]
+                    ], 422);
+                }
+            }
+
+            // Log the error for debugging
+            Log::error('Registration error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mendaftarkan user.',
+            ], 500);
+        }
     }
 
     /**
