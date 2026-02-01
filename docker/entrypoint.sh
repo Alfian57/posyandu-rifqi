@@ -40,13 +40,26 @@ fi
 echo "Optimizing Laravel application..."
 php artisan config:cache
 php artisan route:cache
-php artisan view:cache
+
+# Only cache views if views directory exists and has content
+if [ -d "/var/www/resources/views" ] && [ "$(ls -A /var/www/resources/views 2>/dev/null)" ]; then
+  php artisan view:cache
+else
+  echo "Skipping view:cache - no views found (API-only mode)"
+fi
+
 php artisan event:cache
 
-# Publish vendor assets
-echo "Publishing vendor assets..."
-php artisan livewire:publish --assets
-php artisan sweetalert:publish
+# Publish vendor assets if needed
+if php artisan package:discover | grep -q "livewire"; then
+  echo "Publishing Livewire assets..."
+  php artisan livewire:publish --assets || echo "Livewire assets not available"
+fi
+
+if php artisan package:discover | grep -q "sweetalert"; then
+  echo "Publishing SweetAlert assets..."
+  php artisan sweetalert:publish || echo "SweetAlert assets not available"
+fi
 
 # Set proper permissions
 echo "Setting permissions..."

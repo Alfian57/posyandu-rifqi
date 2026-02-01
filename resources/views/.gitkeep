@@ -1,0 +1,5 @@
+# Views Directory
+
+This directory is required by Laravel even for API-only applications when using certain Artisan commands like `view:cache`.
+
+For API-only applications, this directory can remain empty.
